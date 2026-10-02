@@ -1,0 +1,50 @@
+# Stuendlicher Pegel-Logger in der Cloud (kein eigener Rechner noetig).
+# Laeuft um :17 und :47 (abseits der vollen Stunde, dort verzoegert GitHub am staerksten).
+# Doppelte Ruhrverband-Zeitstempel verwirft der Logger selbst.
+# Hinweis: GitHub garantiert die Startzeit NICHT (Verzoegerungen/ausgelassene Laeufe moeglich)
+# -> fuer Anzeige/Testphase ok, fuer zeitkritische Alarmierung spaeter eigener Server.
+name: Pegel-Logger
+
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch: {}        # manuell startbar: Actions -> Pegel-Logger -> Run workflow
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pegel-logger
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HW_MODEL_DIR: modelle
+      HW_LOG_DIR: daten
+      HW_RATING: modelle/rating_Hattingen_pre_post.csv
+      HW_OUT: live.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: R-Paket jsonlite
+        run: Rscript -e 'install.packages("jsonlite")'
+
+      - name: Logger + Web-Export
+        run: Rscript skripte/run.R
+
+      - name: Daten committen
+        run: |
+          git config user.name "hw-logger-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add daten/live_log.csv live.json status.json
+          if git diff --cached --quiet; then echo "nichts Neues"; exit 0; fi
+          git commit -m "Daten $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase --quiet
+          git push
