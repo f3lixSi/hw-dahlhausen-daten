@@ -23,9 +23,10 @@ suppressMessages(library(jsonlite))
 model_dir <- Sys.getenv("HW_MODEL_DIR", "06_Code")
 
 # --- Betriebsschwelle: unter diesem Hattingen-Abfluss taugt das Korrelationsmodell
-#     NICHT (Niedrigwasser ist menschengesteuert; Persistenz ist dort besser, R16).
-#     Datenbasiert = 75.-Perzentil hist. Abfluss. ERSETZEN durch echte Erfahrungsschwelle!
-Q_MIN_WARN <- 70   # m³/s
+#     NICHT (der Bereich unter Mittelwasser ist durch Talsperren/Entnahmen gesteuert;
+#     Persistenz ist dort besser, R16). Datenbasiert = 75.-Perzentil, faellt praktisch mit
+#     dem amtlichen MQ (70,8 m3/s) zusammen. Begriffe seit 2026-10-02: unter_MQ / ab_MQ.
+Q_MIN_WARN <- 70   # m3/s (~ MQ)
 log_dir   <- Sys.getenv("HW_LOG_DIR", "07_Live")
 log_file  <- file.path(log_dir, "live_log.csv")
 if (!dir.exists(log_dir)) dir.create(log_dir)
@@ -78,7 +79,8 @@ log_once <- function() {
   rv_utc <- format(as.POSIXct(rv_time, tz = "Etc/GMT-1"), "%Y-%m-%d %H:%M:%S", tz = "UTC")
 
   # Regime-Flag: ist der aktuelle Abfluss im Gültigkeitsbereich des Modells?
-  regime <- if (is.na(obs$Hattingen)) "unbekannt" else if (obs$Hattingen >= Q_MIN_WARN) "hochwasser_relevant" else "niedrigwasser"
+  # Begriffe an amtliche Hauptwerte angelehnt (frueher: niedrigwasser / hochwasser_relevant)
+  regime <- if (is.na(obs$Hattingen)) "unbekannt" else if (obs$Hattingen >= Q_MIN_WARN) "ab_MQ" else "unter_MQ"
 
   row <- cbind(data.frame(run_time    = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),  # lokale Zeit
                           rv_time     = rv_time,                                  # MEZ, wie geliefert

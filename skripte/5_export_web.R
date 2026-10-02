@@ -53,8 +53,33 @@ sigma <- sapply(c(3, 6, 12), function(h) {
 })
 
 qp  <- c(L$pred_Q_3h, L$pred_Q_6h, L$pred_Q_12h)
-sg  <- ifelse(is.na(sigma), 0, sigma)
-qlo <- pmax(qp - sg, 0); qhi <- qp + sg
+
+# Unsicherheitsband: 90 %, abflussabhaengig, relativ (korr_band.csv aus 1_kalibrierung.R).
+# Fallback (Datei fehlt): altes +-sigma_hi.
+BAND_F <- file.path(MODEL_DIR, "korr_band.csv")
+band_fak <- function(q, lead) {
+  if (!file.exists(BAND_F) || !is.finite(q)) return(c(NA, NA, ""))
+  b <- read.csv(BAND_F, stringsAsFactors = FALSE); b <- b[b$lead == lead, ]
+  bis <- ifelse(is.na(b$q_bis), Inf, b$q_bis)
+  i <- which(q >= b$q_von & q < bis)[1]
+  if (is.na(i)) return(c(NA, NA, ""))
+  c(b$f_lo[i], b$f_hi[i], ifelse(is.na(b$hinweis[i]), "", b$hinweis[i]))
+}
+bf <- lapply(seq_along(qp), function(j) band_fak(qp[j], c(3, 6, 12)[j]))
+f_lo <- as.numeric(sapply(bf, `[`, 1)); f_hi <- as.numeric(sapply(bf, `[`, 2))
+if (all(is.finite(f_lo)) && all(is.finite(f_hi))) {
+  qlo <- qp * f_lo; qhi <- qp * f_hi
+  methode <- "Korrelationsmodell (Oberlaufpegel), 90-%-Band abflussabhaengig"
+} else {
+  sg  <- ifelse(is.na(sigma), 0, sigma)
+  qlo <- pmax(qp - sg, 0); qhi <- qp + sg
+  methode <- "Korrelationsmodell (Oberlaufpegel), +-1 sigma (Fallback)"
+}
+band_hinweis <- unique(Filter(nzchar, sapply(bf, `[`, 3)))
+band_hinweis <- if (length(band_hinweis)) band_hinweis[1] else ""
+
+# Regime-Begriffe vereinheitlichen (aeltere Logzeilen: niedrigwasser / hochwasser_relevant)
+regime_neu <- function(x) ifelse(x == "niedrigwasser", "unter_MQ", ifelse(x == "hochwasser_relevant", "ab_MQ", x))
 
 gauges <- c("Hattingen", LAUFZEIT$key)
 series <- list(time = I(iso(d$t)), Hattingen_W = I(d$Hattingen_W))
@@ -71,13 +96,13 @@ out <- list(
   meta = list(generated = iso(Sys.time()), latest = iso(L$t), q_min_warn = Q_MIN_WARN,
               source = "Ruhrverband (Talsperrenleitzentrale Ruhr), eigenes Korrelationsmodell",
               hinweis = "Keine amtliche Warnung. Entscheidungshilfe fuer das DLRG-Wachteam."),
-  latest = list(Q = L$Hattingen, W = L$Hattingen_W, regime = L$regime,
+  latest = list(Q = L$Hattingen, W = L$Hattingen_W, regime = regime_neu(L$regime),
                 dW_3h = L$Hattingen_W - vor("Hattingen_W"), dQ_3h = L$Hattingen - vor("Hattingen")),
   forecast = list(base = iso(L$t), valid = isTRUE(L$Hattingen >= Q_MIN_WARN),
                   leads = I(c(3, 6, 12)), time = I(iso(L$t + c(3, 6, 12) * 3600)),
                   Q = I(qp), Q_lo = I(qlo), Q_hi = I(qhi),
                   W = I(Q_to_W(qp)), W_lo = I(Q_to_W(qlo)), W_hi = I(Q_to_W(qhi)),
-                  methode = "Korrelationsmodell (Oberlaufpegel), +-1 sigma"),
+                  methode = methode, band_hinweis = band_hinweis),
   series = series,
   upstream = upstream
 )
