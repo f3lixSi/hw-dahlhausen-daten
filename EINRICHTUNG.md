@@ -48,6 +48,9 @@ DATA_URL: "https://raw.githubusercontent.com/<DEIN-NAME>/hw-dahlhausen-daten/mai
   bzw. `modelle/` kopieren, committen, pushen (die Dateien sind identisch, nur die Pfade kommen aus dem Workflow).
 - `run_time` im Log ist in der Cloud **UTC** (GitHub-Rechner); maßgeblich ist ohnehin `rv_time` (MEZ).
 
+## 7. Zuverlässiger Takt
+GitHubs Zeitplan ist unzuverlässig -> externen Taktgeber einrichten: siehe `TAKTGEBER.md`.
+
 ## Ehrliche Grenzen
 - GitHub garantiert die Startzeit nicht: Verzögerungen, selten ausgelassene Läufe. Für Anzeige/Testphase ok,
   **nicht** als alleinige Grundlage für zeitkritische Alarmierung → später eigener Server (Projektdoku, Architektur B).

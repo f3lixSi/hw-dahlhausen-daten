@@ -1,0 +1,4 @@
+lead,beta,quelle,kappung_rel,mae_roh_test,mae_korr_test,verbesserung_pct,verbesserung_150_pct,n_fit,n_test
+3,0.5815,fehler_lead3,0.2,4.332,3.106,28.3,31.8,24855,5079
+6,1.0,fehler_lead3,0.2,7.656,6.113,20.2,20.7,24855,5079
+12,1.0,fehler_lead3,0.2,14.219,12.669,10.9,11.5,24855,5079

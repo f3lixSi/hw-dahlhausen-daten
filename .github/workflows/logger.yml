@@ -39,6 +39,10 @@ jobs:
       - name: Logger + Web-Export
         run: Rscript skripte/run.R
 
+      - name: Fehlerkorrektur + Trefferpruefung
+        continue-on-error: true      # faellt sie aus, bleibt die unkorrigierte live.json stehen
+        run: python3 skripte/6_korrektur_verifikation.py
+
       - name: Daten committen
         run: |
           git config user.name "hw-logger-bot"

@@ -9,8 +9,8 @@ für die Website. `status.json` zeigt den letzten Lauf.
 | Pfad | Inhalt |
 |---|---|
 | `.github/workflows/logger.yml` | Zeitplan + Ablauf |
-| `skripte/` | `run.R` (ein Lauf), `3_logger.R`, `5_export_web.R` (identisch zu `06_Code/` im Projekt) |
-| `modelle/` | Korrelationsmodelle (+3/6/12 h), Abflusskurve Hattingen |
+| `skripte/` | `run.R` (ein Lauf), `3_logger.R`, `5_export_web.R`, `6_korrektur_verifikation.py` (Fehlerfortschreibung + Trefferpruefung; identisch zu `06_Code/`) |
+| `modelle/` | Korrelationsmodelle (+3/6/12 h), Unsicherheitsband `korr_band.csv`, Korrekturfaktoren `korr_fehler.csv`, Abflusskurve Hattingen |
 | `daten/live_log.csv` | fortlaufendes Log |
 | `live.json` | Datei, die die Website liest |
 | `status.json` | letzter Lauf: Zeit, Ergebnis, letzter Ruhrverband-Stand |
